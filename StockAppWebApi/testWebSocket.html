@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h1>Test websocket show x, y realtime</h1>
+    <table id="table-body">
+      <thead>
+        <th>Change</th>
+        <th>CompanyName</th>
+        <th>IndexName</th>
+        <th>IndexSymbol</th>
+        <th>Industry</th>
+        <th>IndustryEn</th>
+        <th>MarketCap</th>
+        <th>PercentChange</th>
+        <th>Price</th>
+        <th>QuoteId</th>
+        <th>Sector</th>
+        <th>SectorEn</th>
+        <th>StockType</th>
+        <th>Symbol</th>
+        <th>TimeStamp</th>
+        <th>Volume</th>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <script>
+      const page = 1;
+      const limit = 10;
+      const socket = new WebSocket(
+        `wss://localhost:7217/api/quote/ws?page=${page}&limit=${limit}`
+      );
+
+      // Mảng để lưu trữ số lượng hàng cần thiết
+      const rows = [];
+
+      socket.onopen = () => {
+        console.log("Connected to the server via websocket");
+      };
+
+      socket.onmessage = (event) => {
+        const quotes = JSON.parse(event.data);
+
+        // Lấy thẻ <tbody> của bảng
+        const tableBody = document.getElementById("table-body");
+
+        // Duyệt qua danh sách đối tượng và thêm vào mảng rows
+        quotes.forEach((quote) => {
+          rows.push(quote);
+
+          // Giữ lại chỉ số lượng hàng giới hạn
+          if (rows.length > limit) {
+            rows.shift();
+          }
+        });
+
+        // Xóa toàn bộ các hàng hiện tại trong bảng
+        while (tableBody.firstChild) {
+          tableBody.removeChild(tableBody.firstChild);
+        }
+
+        // Duyệt qua mảng rows và tạo các hàng trong bảng quotes
+        rows.forEach((quote) => {
+          // Tạo một hàng mới trong bảng
+          const row = document.createElement("tr");
+
+          // Duyệt qua các thuộc tính của đối tượng JSON và tạo ô cho mỗi thuộc tính
+          for (const key in quote) {
+            if (quote.hasOwnProperty(key)) {
+              const cell = document.createElement("td");
+              cell.textContent = quote[key];
+              row.appendChild(cell);
+            }
+          }
+
+          // Thêm dòng mới vào bảng
+          tableBody.appendChild(row);
+        });
+      };
+
+      socket.onclose = () => {
+        console.log("Connection closed");
+      };
+    </script>
+  </body>
+</html>
